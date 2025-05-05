@@ -47,8 +47,14 @@ export const WordList: React.FC<WordListProps> = ({
                     variant="info"
                     size="sm"
                     onClick={() => {
-                      // Aquí se podría abrir un modal para editar la palabra
-                      // Por simplicidad, lo dejamos pendiente
+                      // Abrir un prompt para editar (podría mejorarse con un modal)
+                      const newWord = prompt("Editar palabra:", wordClue.word);
+                      if (newWord) {
+                        const newDescription = prompt("Editar descripción:", wordClue.description);
+                        if (newDescription) {
+                          onEditWord(index, newWord, newDescription);
+                        }
+                      }
                     }}
                   >
                     Editar

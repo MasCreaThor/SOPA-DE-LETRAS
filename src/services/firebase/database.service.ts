@@ -43,7 +43,10 @@ export const getWordSearchGame = async (gameId: string) => {
     if (gameSnapshot.exists()) {
       return gameSnapshot.val() as WordSearchGame;
     } else {
-      throw new Error('Juego no encontrado');
+      // En lugar de arrojar un error, devolvemos null
+      // Esto permite manejar mejor el caso de un juego no encontrado
+      console.warn(`Juego con ID ${gameId} no encontrado`);
+      return null;
     }
   } catch (error) {
     console.error('Error al obtener sopa de letras:', error);
@@ -146,7 +149,21 @@ export const getUserProfile = async (userId: string) => {
     if (userSnapshot.exists()) {
       return userSnapshot.val() as UserProfile;
     } else {
-      throw new Error('Usuario no encontrado');
+      // Crear un perfil básico para usuarios nuevos
+      const defaultProfile: UserProfile = {
+        uid: userId,
+        email: '',
+        displayName: '',
+        createdAt: new Date().toISOString(),
+        stats: {
+          gamesPlayed: 0,
+          gamesCreated: 0,
+          wordsFound: 0,
+          bestScore: 0
+        },
+        games: {}
+      };
+      return defaultProfile;
     }
   } catch (error) {
     console.error('Error al obtener perfil de usuario:', error);

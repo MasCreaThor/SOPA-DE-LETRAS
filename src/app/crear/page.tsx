@@ -1,7 +1,7 @@
 // src/app/crear/page.tsx
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
@@ -17,6 +17,7 @@ export default function CrearPage() {
   const { user } = useAuth();
   const router = useRouter();
   const [saving, setSaving] = useState<boolean>(false);
+  const [saveEnabled, setSaveEnabled] = useState<boolean>(false);
   
   // Hook personalizado para la lógica de creación
   const {
@@ -38,6 +39,13 @@ export default function CrearPage() {
     validationMessage,
     clearAll
   } = useCreator();
+  
+  // Verificar si se puede guardar
+  useEffect(() => {
+    const canSave = !!title && title.trim() !== '' && !!generatedGrid && wordClues.length > 0;
+    setSaveEnabled(canSave);
+    console.log("Estado de guardado:", { title, generatedGrid: !!generatedGrid, wordClues: wordClues.length, canSave });
+  }, [title, generatedGrid, wordClues]);
   
   // Generar cuadrícula
   const handleGenerateGrid = () => {
@@ -67,6 +75,11 @@ export default function CrearPage() {
       return;
     }
     
+    if (wordClues.length === 0) {
+      toast.error('Debes añadir al menos una palabra');
+      return;
+    }
+    
     if (!generatedGrid) {
       toast.error('Debes generar la cuadrícula antes de guardar');
       return;
@@ -86,6 +99,7 @@ export default function CrearPage() {
         category: 'Otro' // Aquí podrías añadir un selector de categorías
       };
       
+      console.log("Guardando juego:", newGame);
       const game = await createWordSearchGame(newGame, user.uid);
       
       toast.success('¡Juego guardado correctamente!');
@@ -158,9 +172,22 @@ export default function CrearPage() {
             onGenerateGrid={handleGenerateGrid}
             onSaveGame={handleSaveGame}
             isGenerateDisabled={wordClues.length === 0 || saving}
-            isSaveDisabled={!generatedGrid || !title || saving}
+            isSaveDisabled={!saveEnabled || saving}
             readonly={saving}
           />
+          
+          {/* Debug info */}
+          {process.env.NODE_ENV === 'development' && (
+            <div className="mt-6 bg-gray-100 p-4 rounded-lg text-xs">
+              <h3 className="font-bold mb-2">Estado de creación:</h3>
+              <ul>
+                <li>Título: {title ? '✅' : '❌'}</li>
+                <li>Palabras: {wordClues.length > 0 ? '✅' : '❌'} ({wordClues.length})</li>
+                <li>Cuadrícula generada: {generatedGrid ? '✅' : '❌'}</li>
+                <li>Botón guardar: {saveEnabled ? '✅' : '❌'}</li>
+              </ul>
+            </div>
+          )}
         </div>
       </div>
     </div>

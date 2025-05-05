@@ -1,9 +1,10 @@
 // src/components/profile/tabs/UserGamesTab.tsx
 import React, { useState, useEffect } from 'react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { toast } from 'react-hot-toast';
 import { Button } from '@/components/common/Button';
-import { getWordSearchGame } from '@/services/firebase/database.service';
+import { getWordSearchGame, deleteWordSearchGame } from '@/services/firebase/database.service';
+import GameActionButtons from '@/components/profile/GameActionButtons';
 import type { UserProfile, WordSearchGame } from '@/types/wordSearch.types';
 
 interface UserGamesTabProps {
@@ -15,6 +16,7 @@ const UserGamesTab: React.FC<UserGamesTabProps> = ({ profile, profileLoading }) 
   const router = useRouter();
   const [userGames, setUserGames] = useState<WordSearchGame[]>([]);
   const [loadingGames, setLoadingGames] = useState<boolean>(false);
+  const [deletingGames, setDeletingGames] = useState<Record<string, boolean>>({});
 
   // Load user games
   useEffect(() => {
@@ -24,11 +26,20 @@ const UserGamesTab: React.FC<UserGamesTabProps> = ({ profile, profileLoading }) 
       try {
         setLoadingGames(true);
         const gameIds = Object.keys(profile.games);
+        console.log("Intentando cargar juegos con IDs:", gameIds);
+        
+        // Usar Promise.allSettled para manejar errores individuales
         const gamesPromises = gameIds.map(id => getWordSearchGame(id));
         const gamesResults = await Promise.all(gamesPromises);
-        setUserGames(gamesResults);
+        
+        // Filtrar juegos válidos (eliminar nulls)
+        const validGames = gamesResults.filter(game => game !== null) as WordSearchGame[];
+        console.log("Juegos válidos cargados:", validGames.length);
+        
+        setUserGames(validGames);
       } catch (error) {
         console.error('Error al cargar juegos del usuario:', error);
+        toast.error('Hubo un problema al cargar tus juegos');
       } finally {
         setLoadingGames(false);
       }
@@ -38,6 +49,25 @@ const UserGamesTab: React.FC<UserGamesTabProps> = ({ profile, profileLoading }) 
       loadUserGames();
     }
   }, [profile]);
+  
+  // Handle game deletion
+  const handleDeleteGame = async (gameId: string) => {
+    if (!profile || !window.confirm('¿Estás seguro de que deseas eliminar esta sopa de letras? Esta acción no se puede deshacer.')) {
+      return;
+    }
+    
+    try {
+      setDeletingGames(prev => ({ ...prev, [gameId]: true }));
+      await deleteWordSearchGame(gameId, profile.uid);
+      setUserGames(prev => prev.filter(game => game.id !== gameId));
+      toast.success('Sopa de letras eliminada correctamente');
+    } catch (error) {
+      console.error('Error al eliminar el juego:', error);
+      toast.error('Error al eliminar la sopa de letras');
+    } finally {
+      setDeletingGames(prev => ({ ...prev, [gameId]: false }));
+    }
+  };
 
   if (profileLoading) {
     return (
@@ -48,7 +78,7 @@ const UserGamesTab: React.FC<UserGamesTabProps> = ({ profile, profileLoading }) 
     );
   }
 
-  if (!profile?.games) {
+  if (!profile?.games || Object.keys(profile.games).length === 0) {
     return (
       <div className="text-center py-8 bg-gray-50 rounded-lg">
         <p className="text-gray-600">No has creado ninguna sopa de letras aún.</p>
@@ -74,7 +104,13 @@ const UserGamesTab: React.FC<UserGamesTabProps> = ({ profile, profileLoading }) 
   if (userGames.length === 0) {
     return (
       <div className="text-center py-8 bg-gray-50 rounded-lg">
-        <p className="text-gray-600">No se encontraron juegos creados.</p>
+        <p className="text-gray-600">No se encontraron juegos válidos. Puede que algunos juegos hayan sido eliminados.</p>
+        <button
+          onClick={() => router.push('/crear')}
+          className="mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700"
+        >
+          Crear Nueva Sopa de Letras
+        </button>
       </div>
     );
   }
@@ -119,12 +155,11 @@ const UserGamesTab: React.FC<UserGamesTabProps> = ({ profile, profileLoading }) 
               </div>
             </div>
             
-            <div className="px-4 py-3 bg-gray-50 border-t flex justify-end items-center">
-              <Link href={`/jugar/${game.id}`}>
-                <Button variant="primary" size="sm">
-                  Jugar
-                </Button>
-              </Link>
+            <div className="px-4 py-3 bg-gray-50 border-t flex justify-between items-center">
+              <span className="text-xs text-gray-500">
+                ID: {game.id.substring(0, 8)}...
+              </span>
+              <GameActionButtons game={game} onDelete={handleDeleteGame} isDeleting={deletingGames[game.id]} />
             </div>
           </div>
         ))}
