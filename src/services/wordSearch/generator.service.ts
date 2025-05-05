@@ -274,9 +274,21 @@ import type {
    * Crea una versión limpia de la cuadrícula (sin las marcas de las palabras)
    */
   export const createCleanGrid = (wordSearchGrid: WordSearchGrid): GridCell[][] => {
+    // Verificar si wordSearchGrid existe y tiene una grid válida
+    if (!wordSearchGrid || !wordSearchGrid.grid || !wordSearchGrid.grid.length) {
+      // Retornar una cuadrícula vacía 1x1 como fallback
+      return [[{
+        letter: '',
+        row: 0,
+        col: 0,
+        isSelected: false,
+        isHighlighted: false
+      }]];
+    }
+    
     const { grid } = wordSearchGrid;
     const rows = grid.length;
-    const cols = grid[0].length;
+    const cols = grid[0]?.length || 0; // Añadir operador opcional y fallback
     
     const cleanGrid: GridCell[][] = [];
     
@@ -284,7 +296,7 @@ import type {
       cleanGrid[row] = [];
       for (let col = 0; col < cols; col++) {
         cleanGrid[row][col] = {
-          letter: grid[row][col].letter,
+          letter: grid[row][col]?.letter || '',
           row,
           col,
           isSelected: false,

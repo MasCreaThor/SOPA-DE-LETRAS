@@ -5,11 +5,12 @@ import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'react-hot-toast';
 import { useAuth } from '@/context/AuthContext';
-import { getUserProfile } from '@/services/firebase/database.service';
+import { getUserProfile, getWordSearchGame } from '@/services/firebase/database.service';
 import { Button } from '@/components/common/Button';
 import { Input } from '@/components/common/Input';
 import { updateUserProfile } from '@/services/firebase/auth.service';
 import { formatDate } from '@/utils/formatting';
+import Link from 'next/link';
 import type { UserProfile, WordSearchGame, GamePlay } from '@/types/wordSearch.types';
 
 export default function PerfilPage() {
@@ -20,6 +21,10 @@ export default function PerfilPage() {
   const [profileLoading, setProfileLoading] = useState<boolean>(false);
   const [updating, setUpdating] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<'personal' | 'games' | 'stats'>('personal');
+  
+  // Añadir estados para los juegos del usuario
+  const [userGames, setUserGames] = useState<WordSearchGame[]>([]);
+  const [loadingGames, setLoadingGames] = useState<boolean>(false);
   
   useEffect(() => {
     const loadProfile = async () => {
@@ -42,6 +47,31 @@ export default function PerfilPage() {
       loadProfile();
     }
   }, [user]);
+  
+  // Añadir función para cargar los juegos del usuario
+  const loadUserGames = async () => {
+    if (!profile?.games) return;
+    
+    try {
+      setLoadingGames(true);
+      const gameIds = Object.keys(profile.games);
+      const gamesPromises = gameIds.map(id => getWordSearchGame(id));
+      const gamesResults = await Promise.all(gamesPromises);
+      setUserGames(gamesResults);
+    } catch (error) {
+      console.error('Error al cargar juegos del usuario:', error);
+      toast.error('Error al cargar tus juegos');
+    } finally {
+      setLoadingGames(false);
+    }
+  };
+  
+  // Añadir efecto para cargar los juegos cuando cambie el perfil o la pestaña
+  useEffect(() => {
+    if (profile?.games && activeTab === 'games') {
+      loadUserGames();
+    }
+  }, [profile, activeTab]);
   
   const handleUpdateProfile = async () => {
     if (!user) return;
@@ -203,12 +233,62 @@ export default function PerfilPage() {
                     Crear Mi Primera Sopa
                   </button>
                 </div>
+              ) : loadingGames ? (
+                <div className="text-center py-8">
+                  <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+                  <p className="mt-2 text-gray-600">Cargando tus juegos...</p>
+                </div>
+              ) : userGames.length === 0 ? (
+                <div className="text-center py-8 bg-gray-50 rounded-lg">
+                  <p className="text-gray-600">No se encontraron juegos creados.</p>
+                </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* Aquí se mostrarían los juegos del usuario */}
-                  <div className="border rounded-lg p-4 text-center">
-                    <p className="text-gray-600">Aquí se mostrarán tus juegos creados</p>
-                  </div>
+                  {userGames.map(game => (
+                    <div key={game.id} className="border rounded-lg overflow-hidden hover:shadow-md transition-shadow">
+                      <div className="p-4">
+                        <div className="flex justify-between items-start">
+                          <h3 className="font-bold text-lg">{game.title}</h3>
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                            game.difficulty === 'easy' 
+                              ? 'bg-green-100 text-green-800' 
+                              : game.difficulty === 'medium' 
+                                ? 'bg-yellow-100 text-yellow-800' 
+                                : 'bg-red-100 text-red-800'
+                          }`}>
+                            {game.difficulty === 'easy' ? 'Fácil' : game.difficulty === 'medium' ? 'Medio' : 'Difícil'}
+                          </span>
+                        </div>
+                        
+                        {game.description && (
+                          <p className="mt-2 text-gray-600 text-sm">
+                            {game.description.length > 100 
+                              ? `${game.description.substring(0, 100)}...` 
+                              : game.description}
+                          </p>
+                        )}
+                        
+                        <div className="mt-4 flex justify-between items-center text-sm text-gray-500">
+                          <div>
+                            <span>{game.wordClues.length} palabras</span>
+                            <span className="mx-2">•</span>
+                            <span>{game.plays || 0} jugadas</span>
+                          </div>
+                          <div>
+                            {new Date(game.createdAt).toLocaleDateString()}
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="px-4 py-3 bg-gray-50 border-t flex justify-end items-center">
+                        <Link href={`/jugar/${game.id}`}>
+                          <Button variant="primary" size="sm">
+                            Jugar
+                          </Button>
+                        </Link>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>
