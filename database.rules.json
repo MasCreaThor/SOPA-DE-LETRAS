@@ -1,0 +1,29 @@
+{
+    "rules": {
+      "users": {
+        "$uid": {
+          ".read": "$uid === auth.uid",
+          ".write": "$uid === auth.uid",
+          "games": {
+            ".indexOn": ["createdAt"]
+          },
+          "favorites": {
+            ".indexOn": [".value"]
+          }
+        }
+      },
+      "wordSearchGames": {
+        ".read": true,
+        ".write": "auth != null",
+        ".indexOn": ["createdBy", "createdAt", "category", "difficulty"],
+        "$gameId": {
+          ".write": "auth != null && (data.child('createdBy').val() === auth.uid || !data.exists())"
+        }
+      },
+      "gamePlays": {
+        ".read": "auth != null",
+        ".write": "auth != null",
+        ".indexOn": ["gameId", "userId", "playedAt"]
+      }
+    }
+  }
