@@ -15,7 +15,7 @@ interface UseCreatorReturn {
   description: string;
   setDescription: (description: string) => void;
   wordClues: WordClue[];
-  setWordClues: (wordClues: WordClue[]) => void; // Añadido el setter para wordClues
+  setWordClues: (wordClues: WordClue[]) => void; // Añadido para la edición
   addWord: (word: string, description: string) => boolean;
   updateWord: (index: number, word: string, description: string) => boolean;
   removeWord: (index: number) => void;
@@ -24,7 +24,7 @@ interface UseCreatorReturn {
   customSize: { rows: number; cols: number } | null;
   setCustomSize: (size: { rows: number; cols: number } | null) => void;
   generatedGrid: WordSearchGrid | null;
-  setGeneratedGrid: (grid: WordSearchGrid | null) => void; // Añadido el setter para generatedGrid
+  setGeneratedGrid: (grid: WordSearchGrid | null) => void; // Añadido para la edición
   generateGrid: () => boolean;
   isValid: boolean;
   validationMessage: string;
@@ -197,7 +197,7 @@ export const useCreator = ({
     description,
     setDescription,
     wordClues,
-    setWordClues, // Exponemos el setter directamente
+    setWordClues, // Añadido para soportar edición directa
     addWord,
     updateWord,
     removeWord,
@@ -206,7 +206,7 @@ export const useCreator = ({
     customSize,
     setCustomSize,
     generatedGrid,
-    setGeneratedGrid, // Exponemos el setter directamente
+    setGeneratedGrid, // Añadido para soportar edición directa
     generateGrid,
     isValid,
     validationMessage,
