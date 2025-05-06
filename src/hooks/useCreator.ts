@@ -15,7 +15,6 @@ interface UseCreatorReturn {
   description: string;
   setDescription: (description: string) => void;
   wordClues: WordClue[];
-  setWordClues: (wordClues: WordClue[]) => void;
   addWord: (word: string, description: string) => boolean;
   updateWord: (index: number, word: string, description: string) => boolean;
   removeWord: (index: number) => void;
@@ -24,7 +23,6 @@ interface UseCreatorReturn {
   customSize: { rows: number; cols: number } | null;
   setCustomSize: (size: { rows: number; cols: number } | null) => void;
   generatedGrid: WordSearchGrid | null;
-  setGeneratedGrid: (grid: WordSearchGrid | null) => void;
   generateGrid: () => boolean;
   isValid: boolean;
   validationMessage: string;
@@ -48,7 +46,7 @@ export const useCreator = ({
   // Validar si se puede añadir una palabra
   const validateWord = (word: string): { valid: boolean; message?: string } => {
     // Verificar longitud
-    if (!word || word.trim().length < 3) {
+    if (word.length < 3) {
       return { 
         valid: false, 
         message: 'La palabra debe tener al menos 3 letras' 
@@ -74,14 +72,46 @@ export const useCreator = ({
     return { valid: true };
   };
   
-  // Añadir una nueva palabra
-  const addWord = useCallback((word: string, description: string): boolean => {
-    if (!word || !description) {
+  // Generar la cuadrícula
+  const generateGrid = useCallback((): boolean => {
+    if (wordClues.length === 0) {
       setIsValid(false);
-      setValidationMessage('La palabra y descripción son requeridas');
+      setValidationMessage('Debe añadir al menos una palabra');
+      return false;
+    }
+    
+    const words = wordClues.map(wc => wc.word);
+    const validation = validateWords(words);
+    
+    if (!validation.valid) {
+      setIsValid(false);
+      setValidationMessage(validation.message || 'Palabras no válidas');
       return false;
     }
 
+    try {
+      const grid = generateWordSearch(wordClues, difficulty, customSize || undefined);
+      setGeneratedGrid(grid);
+      setIsValid(true);
+      setValidationMessage('');
+      return true;
+    } catch (error) {
+      console.error('Error al generar la cuadrícula:', error);
+      setIsValid(false);
+      setValidationMessage('Error al generar la sopa de letras. Intente con menos palabras o una cuadrícula más grande.');
+      return false;
+    }
+  }, [wordClues, difficulty, customSize]);
+  
+  // Generar cuadrícula automáticamente cuando las palabras cambian
+  useEffect(() => {
+    if (wordClues.length > 0) {
+      generateGrid();
+    }
+  }, [wordClues, difficulty, generateGrid]);
+  
+  // Añadir una nueva palabra
+  const addWord = useCallback((word: string, description: string): boolean => {
     const validation = validateWord(word);
     
     if (!validation.valid) {
@@ -94,21 +124,12 @@ export const useCreator = ({
     setIsValid(true);
     setValidationMessage('');
     
-    // Invalidar cualquier cuadrícula generada previamente
-    setGeneratedGrid(null);
-    
     return true;
   }, [wordClues]);
   
   // Actualizar una palabra existente
   const updateWord = useCallback((index: number, word: string, description: string): boolean => {
     if (index < 0 || index >= wordClues.length) {
-      return false;
-    }
-    
-    if (!word || !description) {
-      setIsValid(false);
-      setValidationMessage('La palabra y descripción son requeridas');
       return false;
     }
     
@@ -140,9 +161,6 @@ export const useCreator = ({
     setIsValid(true);
     setValidationMessage('');
     
-    // Invalidar cualquier cuadrícula generada previamente
-    setGeneratedGrid(null);
-    
     return true;
   }, [wordClues]);
   
@@ -157,52 +175,7 @@ export const useCreator = ({
       newWordClues.splice(index, 1);
       return newWordClues;
     });
-    
-    // Invalidar cualquier cuadrícula generada previamente
-    setGeneratedGrid(null);
   }, [wordClues]);
-  
-  // Generar la cuadrícula
-  const generateGrid = useCallback((): boolean => {
-    if (wordClues.length === 0) {
-      setIsValid(false);
-      setValidationMessage('Debe añadir al menos una palabra');
-      return false;
-    }
-    
-    const words = wordClues.map(wc => wc.word);
-    const validation = validateWords(words);
-    
-    if (!validation.valid) {
-      setIsValid(false);
-      setValidationMessage(validation.message || 'Palabras no válidas');
-      return false;
-    }
-
-    try {
-      const grid = generateWordSearch(wordClues, difficulty, customSize || undefined);
-      setGeneratedGrid(grid);
-      setIsValid(true);
-      setValidationMessage('');
-      console.log("Cuadrícula generada con éxito:", grid);
-      return true;
-    } catch (error) {
-      console.error('Error al generar la cuadrícula:', error);
-      setIsValid(false);
-      setValidationMessage('Error al generar la sopa de letras. Intente con menos palabras o una cuadrícula más grande.');
-      return false;
-    }
-  }, [wordClues, difficulty, customSize]);
-  
-  // Generar automáticamente la cuadrícula cuando haya al menos una palabra
-  useEffect(() => {
-    if (wordClues.length > 0 && !generatedGrid) {
-      // Solo intentamos generar automáticamente si es la primera palabra añadida
-      if (wordClues.length === 1) {
-        generateGrid();
-      }
-    }
-  }, [wordClues, generatedGrid, generateGrid]);
   
   // Limpiar todo
   const clearAll = useCallback(() => {
@@ -222,7 +195,6 @@ export const useCreator = ({
     description,
     setDescription,
     wordClues,
-    setWordClues,
     addWord,
     updateWord,
     removeWord,
@@ -231,7 +203,6 @@ export const useCreator = ({
     customSize,
     setCustomSize,
     generatedGrid,
-    setGeneratedGrid,
     generateGrid,
     isValid,
     validationMessage,

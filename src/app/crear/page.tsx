@@ -1,7 +1,7 @@
 // src/app/crear/page.tsx
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
@@ -17,7 +17,6 @@ export default function CrearPage() {
   const { user } = useAuth();
   const router = useRouter();
   const [saving, setSaving] = useState<boolean>(false);
-  const [saveEnabled, setSaveEnabled] = useState<boolean>(false);
   
   // Hook personalizado para la lógica de creación
   const {
@@ -40,14 +39,7 @@ export default function CrearPage() {
     clearAll
   } = useCreator();
   
-  // Verificar si se puede guardar
-  useEffect(() => {
-    const canSave = !!title && title.trim() !== '' && !!generatedGrid && wordClues.length > 0;
-    setSaveEnabled(canSave);
-    console.log("Estado de guardado:", { title, generatedGrid: !!generatedGrid, wordClues: wordClues.length, canSave });
-  }, [title, generatedGrid, wordClues]);
-  
-  // Generar cuadrícula
+  // Generar cuadrícula explícitamente (aunque ahora también se genera automáticamente)
   const handleGenerateGrid = () => {
     if (wordClues.length === 0) {
       toast.error('Debes añadir al menos una palabra');
@@ -57,7 +49,7 @@ export default function CrearPage() {
     const success = generateGrid();
     
     if (success) {
-      toast.success('¡Cuadrícula generada correctamente!');
+      toast.success('¡Cuadrícula regenerada correctamente!');
     } else {
       toast.error(validationMessage || 'Error al generar la cuadrícula');
     }
@@ -72,11 +64,6 @@ export default function CrearPage() {
     
     if (!title) {
       toast.error('Debes añadir un título');
-      return;
-    }
-    
-    if (wordClues.length === 0) {
-      toast.error('Debes añadir al menos una palabra');
       return;
     }
     
@@ -99,7 +86,6 @@ export default function CrearPage() {
         category: 'Otro' // Aquí podrías añadir un selector de categorías
       };
       
-      console.log("Guardando juego:", newGame);
       const game = await createWordSearchGame(newGame, user.uid);
       
       toast.success('¡Juego guardado correctamente!');
@@ -158,6 +144,7 @@ export default function CrearPage() {
             grid={generatedGrid}
             onRegenerateGrid={handleGenerateGrid}
             previewMode={false}
+            wordClues={wordClues.map(wc => wc.word)} // Pasar las palabras al editor para resaltarlas
           />
         </div>
         
@@ -172,22 +159,9 @@ export default function CrearPage() {
             onGenerateGrid={handleGenerateGrid}
             onSaveGame={handleSaveGame}
             isGenerateDisabled={wordClues.length === 0 || saving}
-            isSaveDisabled={!saveEnabled || saving}
+            isSaveDisabled={!generatedGrid || !title || saving}
             readonly={saving}
           />
-          
-          {/* Debug info */}
-          {process.env.NODE_ENV === 'development' && (
-            <div className="mt-6 bg-gray-100 p-4 rounded-lg text-xs">
-              <h3 className="font-bold mb-2">Estado de creación:</h3>
-              <ul>
-                <li>Título: {title ? '✅' : '❌'}</li>
-                <li>Palabras: {wordClues.length > 0 ? '✅' : '❌'} ({wordClues.length})</li>
-                <li>Cuadrícula generada: {generatedGrid ? '✅' : '❌'}</li>
-                <li>Botón guardar: {saveEnabled ? '✅' : '❌'}</li>
-              </ul>
-            </div>
-          )}
         </div>
       </div>
     </div>

@@ -1,6 +1,6 @@
 // src/components/creator/GridEditor.tsx
 "use client";
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { WordSearchGrid } from '@/components/game/WordSearchGrid';
 import { Button } from '@/components/common/Button';
 import type { GridCell, WordSearchGrid as WordSearchGridType } from '@/types/wordSearch.types';
@@ -9,15 +9,18 @@ interface GridEditorProps {
   grid: WordSearchGridType | null;
   onRegenerateGrid: () => void;
   previewMode?: boolean;
+  wordClues?: string[]; // Añadido para poder resaltar palabras específicas
 }
 
 export const GridEditor: React.FC<GridEditorProps> = ({
   grid,
   onRegenerateGrid,
-  previewMode = false
+  previewMode = false,
+  wordClues = []
 }) => {
   // Estado para manejar la selección de celdas (solo para UI)
   const [selectedCells, setSelectedCells] = useState<GridCell[]>([]);
+  const [displayGrid, setDisplayGrid] = useState<GridCell[][]>([]);
   
   // Función para simular la selección de celdas (para vista previa)
   const handleCellSelect = (cell: GridCell) => {
@@ -36,6 +39,32 @@ export const GridEditor: React.FC<GridEditorProps> = ({
   const clearSelection = () => {
     setSelectedCells([]);
   };
+
+  // Crear una versión de la cuadrícula que resalte palabras
+  useEffect(() => {
+    if (!grid) {
+      setDisplayGrid([]);
+      return;
+    }
+
+    // Clonar la grid original
+    const newGrid = grid.grid.map(row => 
+      row.map(cell => ({ ...cell, isHighlighted: false }))
+    );
+
+    // Resaltar las celdas que son parte de palabras
+    for (let row = 0; row < newGrid.length; row++) {
+      for (let col = 0; col < newGrid[row].length; col++) {
+        const cell = newGrid[row][col];
+        // Si la celda pertenece a una palabra y no estamos en modo preview, resaltarla
+        if (cell.isPartOfWord && !previewMode) {
+          newGrid[row][col].isHighlighted = true;
+        }
+      }
+    }
+
+    setDisplayGrid(newGrid);
+  }, [grid, previewMode]);
   
   // Si no hay cuadrícula, mostrar mensaje
   if (!grid) {
@@ -45,7 +74,7 @@ export const GridEditor: React.FC<GridEditorProps> = ({
           No hay cuadrícula generada
         </h3>
         <p className="text-gray-600 mb-6">
-          Añade palabras y descripciones, y luego haz clic en "Generar cuadrícula" para crear tu sopa de letras.
+          Añade palabras y descripciones, y se generará automáticamente la sopa de letras.
         </p>
       </div>
     );
@@ -57,18 +86,19 @@ export const GridEditor: React.FC<GridEditorProps> = ({
         <h3 className="text-lg font-semibold mb-2">Vista previa de la cuadrícula</h3>
         {!previewMode && (
           <p className="text-sm text-gray-600 mb-4">
-            A continuación se muestra la cuadrícula generada. Si no estás satisfecho con la disposición, puedes regenerarla.
+            A continuación se muestra la cuadrícula generada con las palabras resaltadas. Si no estás satisfecho con la disposición, puedes regenerarla.
           </p>
         )}
       </div>
       
       <div className="flex justify-center mb-4">
         <WordSearchGrid 
-          grid={grid.grid} 
+          grid={displayGrid.length > 0 ? displayGrid : grid.grid} 
           onCellSelect={handleCellSelect}
           onSelectionSubmit={clearSelection}
           onSelectionClear={clearSelection}
           readonly={previewMode}
+          highlightWords={!previewMode} // Nuevo prop para indicar si resaltar palabras
         />
       </div>
       

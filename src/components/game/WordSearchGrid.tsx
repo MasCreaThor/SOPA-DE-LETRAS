@@ -10,6 +10,7 @@ interface WordSearchGridProps {
   onSelectionClear: () => void;
   isGameOver?: boolean;
   readonly?: boolean;
+  highlightWords?: boolean; // Nueva propiedad para destacar palabras durante la creación
 }
 
 export const WordSearchGrid: React.FC<WordSearchGridProps> = ({
@@ -18,7 +19,8 @@ export const WordSearchGrid: React.FC<WordSearchGridProps> = ({
   onSelectionSubmit,
   onSelectionClear,
   isGameOver = false,
-  readonly = false
+  readonly = false,
+  highlightWords = false // Por defecto no se destacan
 }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [touchStartCell, setTouchStartCell] = useState<GridCell | null>(null);
@@ -140,6 +142,9 @@ export const WordSearchGrid: React.FC<WordSearchGridProps> = ({
                 cellClass += ' bg-blue-500 text-white';
               } else if (cell.isHighlighted) {
                 cellClass += ' bg-green-500 text-white';
+              } else if (highlightWords && cell.isPartOfWord) {
+                // Si estamos en modo creación y la celda es parte de una palabra, aplicar un color especial
+                cellClass += ' bg-yellow-200 text-gray-800';
               } else {
                 cellClass += ' bg-white hover:bg-gray-200';
               }

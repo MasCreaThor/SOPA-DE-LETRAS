@@ -65,17 +65,25 @@ export const updateWordSearchGame = async (gameId: string, updates: Partial<Word
 
 export const deleteWordSearchGame = async (gameId: string, userId: string) => {
   try {
-    // Eliminar juego
+    // Primero eliminar la sopa de letras
     await remove(ref(database, `wordSearchGames/${gameId}`));
+    console.log(`Juego ${gameId} eliminado correctamente`);
     
-    // Eliminar referencia en el usuario
-    await remove(ref(database, `users/${userId}/games/${gameId}`));
+    // Luego, intentar eliminar la referencia en el usuario
+    try {
+      await remove(ref(database, `users/${userId}/games/${gameId}`));
+      console.log(`Referencia del juego ${gameId} eliminada del usuario ${userId}`);
+    } catch (refError) {
+      console.warn(`No se pudo eliminar la referencia del juego en el usuario: ${refError}`);
+      // No propagar este error, ya que la operación principal se completó
+    }
+    
+    return true;
   } catch (error) {
-    console.error('Error al eliminar sopa de letras:', error);
+    console.error('Error al eliminar la sopa de letras:', error);
     throw error;
   }
 };
-
 export const getRecentWordSearchGames = async (limit: number = 10) => {
   try {
     const recentGamesQuery = query(
