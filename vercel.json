@@ -5,14 +5,14 @@
     "framework": "nextjs",
     "regions": ["cdg1"],
     "env": {
-      "NEXT_PUBLIC_FIREBASE_API_KEY": "@firebase_api_key",
-      "NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN": "@firebase_auth_domain",
-      "NEXT_PUBLIC_FIREBASE_DATABASE_URL": "@firebase_database_url",
-      "NEXT_PUBLIC_FIREBASE_PROJECT_ID": "@firebase_project_id",
-      "NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET": "@firebase_storage_bucket",
-      "NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID": "@firebase_messaging_sender_id",
-      "NEXT_PUBLIC_FIREBASE_APP_ID": "@firebase_app_id",
-      "NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID": "@firebase_measurement_id"
+      "NEXT_PUBLIC_FIREBASE_API_KEY": "AIzaSyC2YvAtqdkqDR_ZIFEjTvBl3pXIdMwZiL0",
+      "NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN": "mas-crea-thor-sdl.firebaseapp.com",
+      "NEXT_PUBLIC_FIREBASE_DATABASE_URL": "https://mas-crea-thor-sdl-default-rtdb.firebaseio.com",
+      "NEXT_PUBLIC_FIREBASE_PROJECT_ID": "mas-crea-thor-sdl",
+      "NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET": "mas-crea-thor-sdl.firebasestorage.app",
+      "NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID": "163900266330",
+      "NEXT_PUBLIC_FIREBASE_APP_ID": "1:163900266330:web:50c7f81768d45ae9940563",
+      "NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID": "G-9SBHSKXK93"
     },
     "headers": [
       {

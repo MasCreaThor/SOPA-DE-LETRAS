@@ -20,7 +20,7 @@ import type {
   ];
   
   // Mapeado de direcciones a incrementos de coordenadas
-  const DIRECTION_INCREMENTS: Record<Direction, [number, number]> = {
+  export const DIRECTION_INCREMENTS: Record<Direction, [number, number]> = {
     'horizontal': [0, 1],
     'vertical': [1, 0],
     'diagonal-up': [-1, 1],

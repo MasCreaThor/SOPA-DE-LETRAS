@@ -9,7 +9,10 @@ import type { WordSearchGame, WordClue, CreateWordSearchGameInput } from '@/type
 export const loadGameForEditing = async (gameId: string): Promise<WordSearchGame> => {
   try {
     const game = await getWordSearchGame(gameId);
-    return game;
+    if (!game) {
+      throw new Error('Juego no encontrado');
+    }
+    return game; // Ahora TypeScript sabe que game no puede ser null
   } catch (error) {
     console.error('Error al cargar el juego para editar:', error);
     throw error;
